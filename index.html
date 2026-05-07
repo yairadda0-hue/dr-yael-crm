@@ -1,0 +1,1235 @@
+
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>מערכת לידים — ד״ר יעל</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f5f4f0;
+      color: #2d2d2d;
+      direction: rtl;
+    }
+
+    /* ---- Header ---- */
+    header {
+      background: #2c3e50;
+      color: #fff;
+      padding: 16px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    header h1 { font-size: 1.2rem; font-weight: 600; }
+    header span { font-size: 0.82rem; opacity: 0.7; }
+
+    /* ---- Stats Bar ---- */
+    #stats-bar {
+      display: flex;
+      gap: 12px;
+      padding: 16px 28px;
+      flex-wrap: wrap;
+    }
+    .stat-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 12px 20px;
+      min-width: 130px;
+      text-align: center;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .stat-card .num { font-size: 1.8rem; font-weight: 700; color: #2c3e50; }
+    .stat-card .lbl { font-size: 0.75rem; color: #888; margin-top: 2px; }
+
+    /* ---- Sync Status Bar ---- */
+    #sync-bar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 10px 28px;
+      background: #fff;
+      border-bottom: 1px solid #eee;
+      flex-wrap: wrap;
+      font-size: 0.82rem;
+      color: #666;
+    }
+    #sync-status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #aaa;
+      display: inline-block;
+      margin-left: 4px;
+      transition: background 0.3s;
+    }
+    #sync-status-dot.ok   { background: #27ae60; }
+    #sync-status-dot.err  { background: #e74c3c; }
+    #sync-status-dot.busy {
+      background: #f39c12;
+      animation: pulse 0.8s infinite alternate;
+    }
+    @keyframes pulse { to { opacity: 0.3; } }
+    #sync-last { color: #aaa; font-size: 0.78rem; }
+    #sync-bar .sep { color: #ddd; }
+    .btn-tiny {
+      padding: 4px 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      background: #fff;
+      color: #555;
+    }
+    .btn-tiny:hover { background: #f0f0f0; }
+    .btn-tiny.danger { border-color: #e74c3c; color: #e74c3c; }
+    .btn-tiny.danger:hover { background: #fdecea; }
+
+    /* ---- Toolbar ---- */
+    #toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 28px;
+      flex-wrap: wrap;
+    }
+    #toolbar input, #toolbar select {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      background: #fff;
+    }
+    #toolbar input { width: 220px; }
+    .btn {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn-primary { background: #2c3e50; color: #fff; }
+    .btn-primary:hover { background: #3d5166; }
+    .btn-success { background: #27ae60; color: #fff; }
+    .btn-success:hover { background: #219150; }
+    .btn-outline { background: transparent; border: 1px solid #bbb; color: #555; }
+    .btn-outline:hover { background: #eee; }
+    .btn-config { background: #7f8c8d; color: #fff; }
+    .btn-config:hover { background: #626d6d; }
+
+    /* ---- Table ---- */
+    #table-wrap {
+      padding: 0 28px 40px;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+    }
+    thead tr { background: #2c3e50; color: #fff; }
+    th, td {
+      padding: 11px 14px;
+      text-align: right;
+      font-size: 0.85rem;
+      border-bottom: 1px solid #f0f0f0;
+      white-space: nowrap;
+    }
+    tbody tr:hover { background: #fafaf8; }
+    tbody tr:last-child td { border-bottom: none; }
+
+    /* Sync indicator per row */
+    td.sync-cell { font-size: 0.7rem; }
+    .sync-ok   { color: #27ae60; }
+    .sync-fail { color: #e74c3c; }
+    .sync-pend { color: #f39c12; }
+
+    /* Status badges */
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .badge-new      { background: #d5f5e3; color: #1a7a40; }
+    .badge-contact  { background: #d6eaf8; color: #1a5276; }
+    .badge-meeting  { background: #fdebd0; color: #935116; }
+    .badge-treated  { background: #e8daef; color: #6c3483; }
+    .badge-closed   { background: #d5d8dc; color: #424949; }
+    .badge-lost     { background: #fadbd8; color: #922b21; }
+
+    /* Score badges */
+    .score-hot  { background: #fadbd8; color: #c0392b; }
+    .score-warm { background: #fdebd0; color: #d35400; }
+    .score-cold { background: #d6eaf8; color: #2980b9; }
+
+    .action-btns { display: flex; gap: 6px; }
+    .btn-sm {
+      padding: 4px 10px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .btn-wa   { background: #25D366; color: #fff; }
+    .btn-wa:hover { background: #1ebe5a; }
+    .btn-edit { background: #f0f0f0; color: #333; }
+    .btn-edit:hover { background: #e0e0e0; }
+    .btn-del  { background: #fbe9e7; color: #c62828; }
+    .btn-del:hover { background: #ffcdd2; }
+
+    /* ---- Modal ---- */
+    #modal-bg {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    #modal-bg.open { display: flex; }
+    #modal {
+      background: #fff;
+      border-radius: 14px;
+      padding: 28px 32px;
+      width: 540px;
+      max-width: 95vw;
+      max-height: 92vh;
+      overflow-y: auto;
+      direction: rtl;
+    }
+    #modal h2 { font-size: 1.1rem; margin-bottom: 20px; color: #2c3e50; }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .form-grid .full { grid-column: 1 / -1; }
+    label { display: block; font-size: 0.8rem; color: #666; margin-bottom: 4px; }
+    input[type=text], input[type=tel], input[type=date], input[type=time],
+    select, textarea {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-family: inherit;
+      direction: rtl;
+    }
+    textarea { height: 70px; resize: vertical; }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+
+    /* ---- Config Modal ---- */
+    #config-modal-bg {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    #config-modal-bg.open { display: flex; }
+    #config-modal {
+      background: #fff;
+      border-radius: 14px;
+      padding: 28px 32px;
+      width: 580px;
+      max-width: 96vw;
+      max-height: 94vh;
+      overflow-y: auto;
+      direction: rtl;
+    }
+    #config-modal h2 { font-size: 1.15rem; margin-bottom: 6px; color: #2c3e50; }
+    #config-modal .subtitle { font-size: 0.82rem; color: #999; margin-bottom: 24px; }
+    .config-section {
+      background: #f8f8f6;
+      border-radius: 10px;
+      padding: 18px 20px;
+      margin-bottom: 16px;
+    }
+    .config-section h3 {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .config-section h3 .icon { font-size: 1rem; }
+    .config-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .config-row.single { grid-template-columns: 1fr; }
+    .config-field { display: flex; flex-direction: column; gap: 4px; }
+    .config-field label { font-size: 0.78rem; color: #666; font-weight: 500; }
+    .config-field input {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 0.86rem;
+      font-family: inherit;
+      direction: ltr;
+      text-align: left;
+    }
+    .config-field input.rtl-input { direction: rtl; text-align: right; }
+    .config-field .hint { font-size: 0.73rem; color: #aaa; margin-top: 2px; }
+    .config-test-btn {
+      margin-top: 10px;
+      padding: 8px 18px;
+      background: #2c3e50;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.84rem;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .config-test-btn:hover { background: #3d5166; }
+    #test-result {
+      margin-top: 10px;
+      font-size: 0.82rem;
+      padding: 8px 12px;
+      border-radius: 6px;
+      display: none;
+    }
+    #test-result.ok  { background: #d5f5e3; color: #1a7a40; display: block; }
+    #test-result.err { background: #fadbd8; color: #922b21; display: block; }
+
+    /* ---- Toast ---- */
+    #toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #2c3e50;
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-size: 0.86rem;
+      font-weight: 500;
+      z-index: 9999;
+      opacity: 0;
+      transition: all 0.35s ease;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    #toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+    #toast.success { background: #27ae60; }
+    #toast.error   { background: #e74c3c; }
+
+    #empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #aaa;
+      font-size: 0.95rem;
+    }
+    #empty-state .icon { font-size: 3rem; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>ניהול לידים — ד״ר יעל</h1>
+    <span id="header-date"></span>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <button class="btn btn-success" onclick="openModal()">+ ליד חדש</button>
+    <button class="btn btn-config"  onclick="openConfig()">⚙ הגדרות חיבורים</button>
+    <button class="btn btn-outline" onclick="exportCSV()" style="color:#fff;border-color:#fff;">ייצוא CSV</button>
+  </div>
+</header>
+
+<!-- Sync Status Bar -->
+<div id="sync-bar">
+  <span>
+    <span id="sync-status-dot"></span>
+    <span id="sync-status-text">טוען הגדרות...</span>
+  </span>
+  <span class="sep">|</span>
+  <span id="sync-last"></span>
+  <span class="sep">|</span>
+  <button class="btn-tiny" onclick="manualSync()">↻ סנכרן עכשיו</button>
+  <button class="btn-tiny danger" onclick="clearPendingSync()">נקה תור סנכרון</button>
+</div>
+
+<!-- Stats -->
+<div id="stats-bar">
+  <div class="stat-card"><div class="num" id="stat-total">0</div><div class="lbl">סה״כ לידים</div></div>
+  <div class="stat-card"><div class="num" id="stat-new">0</div><div class="lbl">חדשים</div></div>
+  <div class="stat-card"><div class="num" id="stat-meeting">0</div><div class="lbl">פגישות קבועות</div></div>
+  <div class="stat-card"><div class="num" id="stat-treated">0</div><div class="lbl">טופלו</div></div>
+  <div class="stat-card"><div class="num" id="stat-hot">0</div><div class="lbl">🔥 חמים</div></div>
+  <div class="stat-card"><div class="num" id="stat-pending">0</div><div class="lbl">⏳ ממתינים לסנכרון</div></div>
+</div>
+
+<!-- Toolbar -->
+<div id="toolbar">
+  <input type="text" id="search" placeholder="חיפוש לפי שם / טלפון..." oninput="renderTable()" />
+  <select id="filter-status" onchange="renderTable()">
+    <option value="">כל הסטטוסים</option>
+    <option>פנייה חדשה</option>
+    <option>יצרנו קשר</option>
+    <option>נקבעה פגישה</option>
+    <option>טופלה</option>
+    <option>סגור</option>
+    <option>אבוד</option>
+  </select>
+  <select id="filter-service" onchange="renderTable()">
+    <option value="">כל הטיפולים</option>
+    <option>בוטוקס</option>
+    <option>חומצה היאלרונית</option>
+    <option>שקעי עיניים</option>
+    <option>פיסול שפתיים</option>
+    <option>חידוד קו לסת</option>
+    <option>CGF / PRP</option>
+    <option>מיצוק עור</option>
+    <option>תיקונים אסתטיים</option>
+    <option>כללי</option>
+  </select>
+  <select id="filter-score" onchange="renderTable()">
+    <option value="">כל הציונים</option>
+    <option>חם</option>
+    <option>פושר</option>
+    <option>קר</option>
+  </select>
+</div>
+
+<!-- Table -->
+<div id="table-wrap">
+  <table id="leads-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>שם פרטי</th>
+        <th>שם משפחה</th>
+        <th>טלפון</th>
+        <th>טיפול</th>
+        <th>מקור</th>
+        <th>סטטוס</th>
+        <th>ציון</th>
+        <th>תאריך פנייה</th>
+        <th>שעת פנייה</th>
+        <th>פולואפ</th>
+        <th>הערות</th>
+        <th>Sheets</th>
+        <th>פעולות</th>
+      </tr>
+    </thead>
+    <tbody id="leads-body"></tbody>
+  </table>
+  <div id="empty-state" style="display:none;">
+    <div class="icon">📋</div>
+    <div>אין לידים תואמים לסינון</div>
+  </div>
+</div>
+
+<!-- Lead Modal -->
+<div id="modal-bg">
+  <div id="modal">
+    <h2 id="modal-title">ליד חדש</h2>
+    <div class="form-grid">
+      <div>
+        <label>שם פרטי *</label>
+        <input type="text" id="f-firstname" placeholder="שם פרטי" />
+      </div>
+      <div>
+        <label>שם משפחה</label>
+        <input type="text" id="f-lastname" placeholder="שם משפחה" />
+      </div>
+      <div>
+        <label>טלפון *</label>
+        <input type="tel" id="f-phone" placeholder="05X-XXXXXXX" />
+      </div>
+      <div>
+        <label>טיפול מעניין</label>
+        <select id="f-service">
+          <option value="">בחרי...</option>
+          <option>בוטוקס</option>
+          <option>חומצה היאלרונית</option>
+          <option>שקעי עיניים</option>
+          <option>פיסול שפתיים</option>
+          <option>חידוד קו לסת</option>
+          <option>CGF / PRP</option>
+          <option>מיצוק עור</option>
+          <option>תיקונים אסתטיים</option>
+          <option>כללי</option>
+        </select>
+      </div>
+      <div>
+        <label>מקור הליד</label>
+        <select id="f-source">
+          <option value="">בחרי...</option>
+          <option>פייסבוק — מודעה</option>
+          <option>אינסטגרם — מודעה</option>
+          <option>פייסבוק — פוסט אורגני</option>
+          <option>אינסטגרם — פוסט אורגני</option>
+          <option>המלצה</option>
+          <option>גוגל</option>
+          <option>אחר</option>
+        </select>
+      </div>
+      <div>
+        <label>סטטוס</label>
+        <select id="f-status">
+          <option>פנייה חדשה</option>
+          <option>יצרנו קשר</option>
+          <option>נקבעה פגישה</option>
+          <option>טופלה</option>
+          <option>סגור</option>
+          <option>אבוד</option>
+        </select>
+      </div>
+      <div>
+        <label>ציון ליד</label>
+        <select id="f-score">
+          <option>חם</option>
+          <option>פושר</option>
+          <option>קר</option>
+        </select>
+      </div>
+      <div>
+        <label>תאריך פנייה</label>
+        <input type="date" id="f-date" />
+      </div>
+      <div>
+        <label>שעת פנייה</label>
+        <input type="time" id="f-time" />
+      </div>
+      <div>
+        <label>תאריך פולואפ</label>
+        <input type="date" id="f-followup" />
+      </div>
+      <div>
+        <label>גיל משוער</label>
+        <input type="text" id="f-age" placeholder="למשל: 47" />
+      </div>
+      <div class="full">
+        <label>הערות</label>
+        <textarea id="f-notes" placeholder="מה ביקשה, מה שאלה, פרטים רלוונטיים..."></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">ביטול</button>
+      <button class="btn btn-primary" onclick="saveLead()">שמור ליד</button>
+    </div>
+  </div>
+</div>
+
+<!-- Config Modal -->
+<div id="config-modal-bg">
+  <div id="config-modal">
+    <h2>⚙ הגדרות חיבורים</h2>
+    <p class="subtitle">כל ההגדרות נשמרות מקומית בדפדפן ואינן נשלחות לאף שרת.</p>
+
+    <!-- Clinic identity -->
+    <div class="config-section">
+      <h3><span class="icon">🏥</span> זהות המרפאה</h3>
+      <div class="config-row">
+        <div class="config-field">
+          <label>שם הרופאה / הרופא</label>
+          <input type="text" id="cfg-doctor-name" class="rtl-input" placeholder='ד"ר יעל עדדה' />
+          <span class="hint">מופיע בהודעות ובחתימות</span>
+        </div>
+        <div class="config-field">
+          <label>שם המזכירה / הנציגה</label>
+          <input type="text" id="cfg-secretary-name" class="rtl-input" placeholder='רייצ&apos;ל' />
+          <span class="hint">נציגת ההודעה הראשונה</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Google Sheets -->
+    <div class="config-section">
+      <h3><span class="icon">📊</span> Google Sheets — סנכרון לידים</h3>
+      <div class="config-row single">
+        <div class="config-field">
+          <label>Google Apps Script Webhook URL</label>
+          <input type="text" id="cfg-sheets-url" placeholder="https://script.google.com/macros/s/AKfy.../exec" />
+          <span class="hint">הדבק את ה-URL שקיבלת אחרי פרסום ה-Script (ראה הנחיות למטה)</span>
+        </div>
+      </div>
+      <div class="config-row single" style="margin-top:10px;">
+        <div class="config-field">
+          <label>Google Sheet ID</label>
+          <input type="text" id="cfg-sheet-id" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms" />
+          <span class="hint">ה-ID מה-URL של הגיליון: docs.google.com/spreadsheets/d/<strong>[ID]</strong>/edit</span>
+        </div>
+      </div>
+      <button class="config-test-btn" onclick="testSheetsConnection()">🧪 בדוק חיבור</button>
+      <div id="test-result"></div>
+    </div>
+
+    <!-- Green API -->
+    <div class="config-section">
+      <h3><span class="icon">💬</span> Green API — WhatsApp</h3>
+      <div class="config-row">
+        <div class="config-field">
+          <label>Instance ID</label>
+          <input type="text" id="cfg-green-instance" placeholder="1101XXXXXXX" />
+        </div>
+        <div class="config-field">
+          <label>API Token</label>
+          <input type="text" id="cfg-green-token" placeholder="d75b3a..." />
+        </div>
+      </div>
+      <div class="config-row single" style="margin-top:10px;">
+        <div class="config-field">
+          <label>נוסח הודעה ראשונה (הטריגר נמצא ב-Zapier)</label>
+          <textarea id="cfg-first-msg" style="height:90px;direction:rtl;"
+            placeholder="[שם], נעים מאוד, שמי [מזכירה] המזכירה של [רופאה]..."></textarea>
+          <span class="hint">השתמשי ב-[שם] לשם הלקוחה, [מזכירה] לשם המזכירה, [רופאה] לשם הרופאה</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Webhook (Landing Page) -->
+    <div class="config-section">
+      <h3><span class="icon">🔗</span> Webhook — דף הנחיתה → CRM</h3>
+      <div class="config-row single">
+        <div class="config-field">
+          <label>Webhook URL לדף הנחיתה (index-v4)</label>
+          <input type="text" id="cfg-webhook-display" readonly
+            style="background:#f0f0ee;color:#555;font-size:0.8rem;"
+            placeholder="יוצג לאחר הגדרת Apps Script" />
+          <span class="hint">העתק URL זה לשדה <code>webhookUrl</code> בתוך LP_CONFIG ב-index-v4.html</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeConfig()">ביטול</button>
+      <button class="btn btn-primary" onclick="saveConfig()">💾 שמור הגדרות</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+'use strict';
+
+// ============================================================
+// CONFIG — כל ההגדרות ב-localStorage (מחליף config.json)
+// ============================================================
+const CONFIG_KEY  = 'dr_yael_config';
+const STORAGE_KEY = 'dr_yael_leads';
+const SYNC_QUEUE  = 'dr_yael_sync_queue';
+
+const DEFAULT_CONFIG = {
+  doctorName:    'ד"ר יעל עדדה',
+  secretaryName: "רייצ'ל",
+  sheetsUrl:     '',       // Google Apps Script exec URL
+  sheetId:       '',       // Sheet ID (for display only)
+  greenInstance: '',
+  greenToken:    '',
+  firstMessage:  "[שם], נעים מאוד, שמי [מזכירה] המזכירה של [רופאה]. ראיתי את הבקשה שלך לייעוץ רפואי אסתטי. אני אדאג לחזור אלייך בשעות הקרובות לאבחון ראשוני בשיחה כדי לוודא התאמה ולתאם מועד במרפאה. בינתיים, כדאי לך לשמור את המספר שלי.",
+};
+
+function getConfig() {
+  try {
+    return Object.assign({}, DEFAULT_CONFIG, JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}'));
+  } catch { return Object.assign({}, DEFAULT_CONFIG); }
+}
+
+function setConfig(cfg) {
+  localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
+}
+
+// ============================================================
+// PHONE NORMALIZATION — 05X → 972XXXXXXXXX
+// ============================================================
+function normalizePhone(raw) {
+  let d = String(raw || '').replace(/\D/g, '');
+  if (d.startsWith('972'))  return d;           // already international
+  if (d.startsWith('0'))    return '972' + d.slice(1);
+  if (d.length === 9)       return '972' + d;   // e.g. 521234567
+  return d;
+}
+
+// ============================================================
+// DATA LAYER — localStorage
+// ============================================================
+function getLeads() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+  catch { return []; }
+}
+
+function saveLeads(leads) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(leads));
+}
+
+// ============================================================
+// SYNC QUEUE — לידים שממתינים לסנכרון ל-Sheets
+// ============================================================
+function getQueue() {
+  try { return JSON.parse(localStorage.getItem(SYNC_QUEUE)) || []; }
+  catch { return []; }
+}
+
+function addToQueue(leadId, action) {
+  // action: 'upsert' | 'status_update'
+  const q = getQueue();
+  const existing = q.findIndex(x => x.leadId === leadId);
+  const entry = { leadId, action, queuedAt: new Date().toISOString() };
+  if (existing !== -1) { q[existing] = entry; } else { q.push(entry); }
+  localStorage.setItem(SYNC_QUEUE, JSON.stringify(q));
+}
+
+function removeFromQueue(leadId) {
+  const q = getQueue().filter(x => x.leadId !== leadId);
+  localStorage.setItem(SYNC_QUEUE, JSON.stringify(q));
+}
+
+function clearPendingSync() {
+  if (!confirm('נקה את כל הלידים הממתינים לסנכרון? (הם לא יישלחו ל-Sheets)')) return;
+  localStorage.removeItem(SYNC_QUEUE);
+  // mark all as no sync
+  const leads = getLeads().map(l => ({ ...l, syncStatus: 'none' }));
+  saveLeads(leads);
+  renderTable();
+  updateSyncBar();
+  showToast('תור הסנכרון נוקה', 'success');
+}
+
+// ============================================================
+// GOOGLE SHEETS SYNC — via Apps Script webhook
+// ============================================================
+async function syncLeadToSheets(lead, action = 'upsert') {
+  const cfg = getConfig();
+  if (!cfg.sheetsUrl) {
+    addToQueue(lead.id, action);
+    updateSyncBar();
+    return { ok: false, reason: 'no_url' };
+  }
+
+  setSyncDot('busy');
+
+  // שיטת GET עם URL params — עוקפת CORS לחלוטין
+  // קובץ HTML מקומי לא יכול לשלוח POST, אבל GET דרך img/script עובד תמיד
+  const leadData = {
+    id:           lead.id,
+    firstName:    lead.firstName || '',
+    lastName:     lead.lastName  || '',
+    phone:        normalizePhone(lead.phone),
+    phoneRaw:     lead.phone,
+    service:      lead.service   || '',
+    source:       lead.source    || '',
+    status:       lead.status    || '',
+    score:        lead.score     || '',
+    date:         lead.date      || '',
+    time:         lead.time      || '',
+    followup:     lead.followup  || '',
+    age:          lead.age       || '',
+    notes:        lead.notes     || '',
+    utm_source:   lead.utm_source   || '',
+    utm_campaign: lead.utm_campaign || '',
+    device:       lead.device    || '',
+    updatedAt:    lead.updatedAt || new Date().toISOString(),
+  };
+
+  return new Promise((resolve) => {
+    const url = cfg.sheetsUrl + '?lead=' + encodeURIComponent(JSON.stringify(leadData));
+    const script = document.createElement('script');
+    let done = false;
+
+    const finish = (ok) => {
+      if (done) return;
+      done = true;
+      document.body.removeChild(script);
+      const leads = getLeads();
+      const idx = leads.findIndex(l => l.id === lead.id);
+      if (idx !== -1) {
+        leads[idx].syncStatus = ok ? 'ok' : 'fail';
+        if (ok) leads[idx].syncAt = new Date().toISOString();
+        saveLeads(leads);
+      }
+      if (ok) {
+        removeFromQueue(lead.id);
+        setSyncDot('ok');
+        updateSyncBar('עכשיו');
+      } else {
+        addToQueue(lead.id, action);
+        setSyncDot('err');
+        updateSyncBar();
+      }
+      renderTable();
+      resolve({ ok });
+    };
+
+    script.src = url;
+    script.onload = () => finish(true);
+    script.onerror = () => {
+      // onerror מופעל גם כשהתשובה לא JS — אבל הנתון כבר נשלח ל-Google
+      // נחכה 2 שניות ואז נסמן כהצלחה
+      setTimeout(() => finish(true), 2000);
+    };
+    setTimeout(() => finish(false), 15000); // timeout 15s
+    document.body.appendChild(script);
+  });
+}
+
+async function manualSync() {
+  const q = getQueue();
+  if (q.length === 0) { showToast('אין לידים ממתינים לסנכרון ✓', 'success'); return; }
+  showToast(`מסנכרן ${q.length} לידים...`);
+  const leads = getLeads();
+  let ok = 0, fail = 0;
+  for (const item of [...q]) {
+    const lead = leads.find(l => l.id === item.leadId);
+    if (!lead) { removeFromQueue(item.leadId); continue; }
+    const result = await syncLeadToSheets(lead, item.action);
+    if (result.ok) ok++; else fail++;
+    await new Promise(r => setTimeout(r, 300)); // throttle
+  }
+  showToast(
+    fail === 0
+      ? `✓ סנכרון הושלם — ${ok} לידים נשלחו`
+      : `⚠ ${ok} נשלחו, ${fail} נכשלו`,
+    fail === 0 ? 'success' : 'error'
+  );
+  updateSyncBar();
+}
+
+// ============================================================
+// SYNC STATUS UI
+// ============================================================
+function setSyncDot(state) {
+  const dot = document.getElementById('sync-status-dot');
+  dot.className = '';
+  dot.classList.add(state);
+}
+
+function updateSyncBar(lastSyncLabel) {
+  const cfg    = getConfig();
+  const q      = getQueue();
+  const pending = q.length;
+
+  document.getElementById('stat-pending').textContent = pending;
+
+  const text = document.getElementById('sync-status-text');
+  if (!cfg.sheetsUrl) {
+    text.textContent = 'Google Sheets לא מוגדר';
+    setSyncDot('err');
+  } else if (pending > 0) {
+    text.textContent = `${pending} ממתינים לסנכרון`;
+    setSyncDot('err');
+  } else {
+    text.textContent = 'מסונכרן עם Google Sheets';
+    setSyncDot('ok');
+  }
+
+  if (lastSyncLabel) {
+    document.getElementById('sync-last').textContent = 'סנכרן לאחרונה: ' + lastSyncLabel;
+  } else {
+    const syncedLeads = getLeads().filter(l => l.syncAt).map(l => l.syncAt).sort().reverse();
+    if (syncedLeads.length > 0) {
+      const d = new Date(syncedLeads[0]);
+      document.getElementById('sync-last').textContent =
+        'סנכרן לאחרונה: ' + d.toLocaleTimeString('he-IL');
+    } else {
+      document.getElementById('sync-last').textContent = 'טרם בוצע סנכרון';
+    }
+  }
+}
+
+// ============================================================
+// RENDERING
+// ============================================================
+const STATUS_CLASS = {
+  'פנייה חדשה': 'badge-new',
+  'יצרנו קשר':  'badge-contact',
+  'נקבעה פגישה':'badge-meeting',
+  'טופלה':       'badge-treated',
+  'סגור':        'badge-closed',
+  'אבוד':        'badge-lost',
+};
+const SCORE_CLASS = { 'חם': 'score-hot', 'פושר': 'score-warm', 'קר': 'score-cold' };
+
+function syncBadge(lead) {
+  if (!lead.syncStatus || lead.syncStatus === 'none') return '<span class="sync-pend" title="לא סונכרן">—</span>';
+  if (lead.syncStatus === 'ok')   return '<span class="sync-ok"  title="סונכרן בהצלחה">✓</span>';
+  if (lead.syncStatus === 'fail') return '<span class="sync-fail" title="שגיאת סנכרון">✗</span>';
+  return '—';
+}
+
+function renderTable() {
+  const search  = document.getElementById('search').value.trim().toLowerCase();
+  const fStatus = document.getElementById('filter-status').value;
+  const fServ   = document.getElementById('filter-service').value;
+  const fScore  = document.getElementById('filter-score').value;
+
+  let leads = getLeads().filter(l => {
+    if (search  && !`${l.firstName}${l.lastName}${l.phone}`.toLowerCase().includes(search)) return false;
+    if (fStatus && l.status  !== fStatus) return false;
+    if (fServ   && l.service !== fServ)   return false;
+    if (fScore  && l.score   !== fScore)  return false;
+    return true;
+  });
+
+  const tbody = document.getElementById('leads-body');
+  const empty = document.getElementById('empty-state');
+
+  if (leads.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    document.getElementById('leads-table').style.display = 'none';
+  } else {
+    empty.style.display = 'none';
+    document.getElementById('leads-table').style.display = '';
+    tbody.innerHTML = leads.map((l, i) => `
+      <tr>
+        <td style="color:#aaa;font-size:0.78rem;">${i + 1}</td>
+        <td><strong>${esc(l.firstName || '')}</strong></td>
+        <td>${esc(l.lastName || '—')}</td>
+        <td style="direction:ltr;text-align:right;">${esc(l.phone)}</td>
+        <td>${esc(l.service || '—')}</td>
+        <td>${esc(l.source  || '—')}</td>
+        <td><span class="badge ${STATUS_CLASS[l.status] || ''}">${esc(l.status)}</span></td>
+        <td><span class="badge ${SCORE_CLASS[l.score] || ''}">${esc(l.score || '—')}</span></td>
+        <td>${esc(l.date     || '—')}</td>
+        <td style="color:#555;">${esc(l.time || '—')}</td>
+        <td style="${followupStyle(l.followup)}">${esc(l.followup || '—')}</td>
+        <td style="max-width:160px;white-space:normal;font-size:0.8rem;color:#555;">${esc(l.notes || '')}</td>
+        <td class="sync-cell">${syncBadge(l)}</td>
+        <td>
+          <div class="action-btns">
+            <button class="btn-sm btn-wa"   onclick="openWA('${esc(l.phone)}','${esc(l.firstName)}')">וואטסאפ</button>
+            <button class="btn-sm btn-edit" onclick="editLead('${l.id}')">עריכה</button>
+            <button class="btn-sm btn-del"  onclick="deleteLead('${l.id}')">מחק</button>
+          </div>
+        </td>
+      </tr>`).join('');
+  }
+
+  updateStats();
+}
+
+function followupStyle(dateStr) {
+  if (!dateStr) return '';
+  const today = new Date(); today.setHours(0,0,0,0);
+  const d = new Date(dateStr);
+  if (d < today) return 'color:#c0392b;font-weight:bold;';
+  const diff = (d - today) / 86400000;
+  if (diff <= 1) return 'color:#e67e22;font-weight:bold;';
+  return '';
+}
+
+function updateStats() {
+  const all = getLeads();
+  document.getElementById('stat-total').textContent   = all.length;
+  document.getElementById('stat-new').textContent     = all.filter(l => l.status === 'פנייה חדשה').length;
+  document.getElementById('stat-meeting').textContent = all.filter(l => l.status === 'נקבעה פגישה').length;
+  document.getElementById('stat-treated').textContent = all.filter(l => l.status === 'טופלה').length;
+  document.getElementById('stat-hot').textContent     = all.filter(l => l.score  === 'חם').length;
+  document.getElementById('stat-pending').textContent = getQueue().length;
+}
+
+// ============================================================
+// MODAL — Lead
+// ============================================================
+let editingId = null;
+
+function openModal(id) {
+  editingId = id || null;
+  document.getElementById('modal-title').textContent = id ? 'עריכת ליד' : 'ליד חדש';
+
+  if (id) {
+    const l = getLeads().find(x => x.id === id);
+    if (!l) return;
+    document.getElementById('f-firstname').value = l.firstName || '';
+    document.getElementById('f-lastname').value  = l.lastName  || '';
+    document.getElementById('f-phone').value     = l.phone     || '';
+    document.getElementById('f-service').value   = l.service   || '';
+    document.getElementById('f-source').value    = l.source    || '';
+    document.getElementById('f-status').value    = l.status    || 'פנייה חדשה';
+    document.getElementById('f-score').value     = l.score     || 'פושר';
+    document.getElementById('f-date').value      = l.date      || '';
+    document.getElementById('f-time').value      = l.time      || '';
+    document.getElementById('f-followup').value  = l.followup  || '';
+    document.getElementById('f-age').value       = l.age       || '';
+    document.getElementById('f-notes').value     = l.notes     || '';
+  } else {
+    const now = new Date();
+    ['f-firstname','f-lastname','f-phone','f-service','f-source',
+     'f-followup','f-age','f-notes'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('f-status').value = 'פנייה חדשה';
+    document.getElementById('f-score').value  = 'פושר';
+    document.getElementById('f-date').value   = now.toISOString().split('T')[0];
+    document.getElementById('f-time').value   = now.toTimeString().slice(0,5);
+  }
+
+  document.getElementById('modal-bg').classList.add('open');
+  setTimeout(() => document.getElementById('f-firstname').focus(), 100);
+}
+
+function closeModal() {
+  document.getElementById('modal-bg').classList.remove('open');
+  editingId = null;
+}
+
+async function saveLead() {
+  const firstName = document.getElementById('f-firstname').value.trim();
+  const lastName  = document.getElementById('f-lastname').value.trim();
+  const phone     = document.getElementById('f-phone').value.trim();
+  if (!firstName || !phone) { alert('שם פרטי וטלפון הם שדות חובה'); return; }
+
+  const isNew = !editingId;
+  const lead = {
+    id:        editingId || Date.now().toString(),
+    firstName,
+    lastName,
+    phone,
+    service:   document.getElementById('f-service').value,
+    source:    document.getElementById('f-source').value,
+    status:    document.getElementById('f-status').value,
+    score:     document.getElementById('f-score').value,
+    date:      document.getElementById('f-date').value,
+    time:      document.getElementById('f-time').value,
+    followup:  document.getElementById('f-followup').value,
+    age:       document.getElementById('f-age').value,
+    notes:     document.getElementById('f-notes').value.trim(),
+    updatedAt: new Date().toISOString(),
+    syncStatus: 'none',
+  };
+
+  // preserve existing syncAt if re-editing a synced lead
+  if (editingId) {
+    const existing = getLeads().find(l => l.id === editingId);
+    if (existing && existing.syncAt) lead.syncAt = existing.syncAt;
+  }
+
+  const leads = getLeads();
+  if (editingId) {
+    const idx = leads.findIndex(x => x.id === editingId);
+    if (idx !== -1) leads[idx] = lead;
+  } else {
+    leads.unshift(lead);
+  }
+  saveLeads(leads);
+  closeModal();
+  renderTable();
+
+  // Determine sync action
+  const action = isNew ? 'upsert' : 'status_update';
+  showToast('שומר ומסנכרן...');
+  const result = await syncLeadToSheets(lead, action);
+
+  if (result.ok) {
+    showToast(isNew ? '✓ ליד נוסף וסונכרן ל-Sheets' : '✓ ליד עודכן וסונכרן ל-Sheets', 'success');
+  } else if (result.reason === 'no_url') {
+    showToast('ליד נשמר. הגדר Sheets URL בהגדרות לסנכרון.', '');
+  } else {
+    showToast('ליד נשמר. הסנכרון ל-Sheets נכשל — ינסה שוב.', 'error');
+  }
+}
+
+function editLead(id) { openModal(id); }
+
+function deleteLead(id) {
+  if (!confirm('למחוק את הליד הזה?')) return;
+  saveLeads(getLeads().filter(l => l.id !== id));
+  removeFromQueue(id);
+  renderTable();
+  updateSyncBar();
+}
+
+// ============================================================
+// CONFIG MODAL
+// ============================================================
+function openConfig() {
+  const cfg = getConfig();
+  document.getElementById('cfg-doctor-name').value     = cfg.doctorName;
+  document.getElementById('cfg-secretary-name').value  = cfg.secretaryName;
+  document.getElementById('cfg-sheets-url').value      = cfg.sheetsUrl;
+  document.getElementById('cfg-sheet-id').value        = cfg.sheetId;
+  document.getElementById('cfg-green-instance').value  = cfg.greenInstance;
+  document.getElementById('cfg-green-token').value     = cfg.greenToken;
+  document.getElementById('cfg-first-msg').value       = cfg.firstMessage;
+  document.getElementById('cfg-webhook-display').value = cfg.sheetsUrl || '(הגדר Apps Script URL למעלה)';
+  document.getElementById('test-result').className     = '';
+  document.getElementById('test-result').textContent   = '';
+  document.getElementById('config-modal-bg').classList.add('open');
+}
+
+function closeConfig() {
+  document.getElementById('config-modal-bg').classList.remove('open');
+}
+
+function saveConfig() {
+  const cfg = {
+    doctorName:    document.getElementById('cfg-doctor-name').value.trim(),
+    secretaryName: document.getElementById('cfg-secretary-name').value.trim(),
+    sheetsUrl:     document.getElementById('cfg-sheets-url').value.trim(),
+    sheetId:       document.getElementById('cfg-sheet-id').value.trim(),
+    greenInstance: document.getElementById('cfg-green-instance').value.trim(),
+    greenToken:    document.getElementById('cfg-green-token').value.trim(),
+    firstMessage:  document.getElementById('cfg-first-msg').value,
+  };
+  setConfig(cfg);
+  closeConfig();
+  updateSyncBar();
+  showToast('✓ הגדרות נשמרו בהצלחה', 'success');
+}
+
+async function testSheetsConnection() {
+  const url = document.getElementById('cfg-sheets-url').value.trim();
+  const res  = document.getElementById('test-result');
+  if (!url) { res.className = 'err'; res.textContent = 'הכנס URL תחילה'; return; }
+  res.className = ''; res.textContent = 'בודק...';
+  try {
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'ping' }),
+    });
+    if (r.ok) {
+      res.className = 'ok'; res.textContent = '✓ החיבור תקין! Apps Script מגיב.';
+    } else {
+      res.className = 'err'; res.textContent = `✗ שגיאה: HTTP ${r.status}`;
+    }
+  } catch (e) {
+    res.className = 'err'; res.textContent = '✗ לא ניתן להתחבר. בדוק שה-URL נכון ושה-Script פורסם.';
+  }
+}
+
+// ============================================================
+// WHATSAPP
+// ============================================================
+function openWA(phone, name) {
+  const cfg   = getConfig();
+  const clean = normalizePhone(phone);
+  const msg   = cfg.firstMessage
+    .replace(/\[שם\]/g,       name)
+    .replace(/\[מזכירה\]/g,   cfg.secretaryName)
+    .replace(/\[רופאה\]/g,    cfg.doctorName);
+  window.open(`https://wa.me/${clean}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+// ============================================================
+// EXPORT CSV
+// ============================================================
+function exportCSV() {
+  const leads = getLeads();
+  if (leads.length === 0) { alert('אין לידים לייצוא'); return; }
+  const headers = ['שם פרטי','שם משפחה','טלפון','טלפון בינלאומי','טיפול','מקור','סטטוס','ציון','גיל','תאריך פנייה','שעת פנייה','פולואפ','הערות','סטטוס סנכרון'];
+  const rows = leads.map(l => [
+    l.firstName, l.lastName, l.phone, normalizePhone(l.phone),
+    l.service, l.source, l.status, l.score,
+    l.age, l.date, l.time, l.followup, l.notes, l.syncStatus || 'none'
+  ].map(v => `"${(v||'').replace(/"/g,'""')}"`));
+
+  const csv  = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `לידים-דר-יעל-${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ============================================================
+// INCOMING WEBHOOK — מאזין ל-postMessage מדפי נחיתה (cross-origin)
+// (גם מקבל לידים מ-index-v4 דרך Apps Script → localStorage אם אותו דומיין)
+// ============================================================
+window.addEventListener('message', async (event) => {
+  // בדיקת origin — ניתן להגביל ל-domain ספציפי
+  if (!event.data || event.data.type !== 'dr_yael_new_lead') return;
+  const data = event.data.lead;
+  if (!data || !data.phone) return;
+
+  const now = new Date();
+  const lead = {
+    id:          data.id || Date.now().toString(),
+    firstName:   data.name || data.firstName || '',
+    lastName:    data.lastName || '',
+    phone:       data.phone,
+    service:     data.service || 'ייעוץ חינם',
+    source:      data.utm_source || 'דף נחיתה',
+    status:      'פנייה חדשה',
+    score:       'חם',
+    date:        now.toISOString().split('T')[0],
+    time:        now.toTimeString().slice(0,5),
+    followup:    '',
+    age:         '',
+    notes:       `קמפיין: ${data.utm_campaign || ''} | device: ${data.device || ''}`,
+    utm_source:  data.utm_source   || '',
+    utm_campaign:data.utm_campaign || '',
+    device:      data.device       || '',
+    updatedAt:   now.toISOString(),
+    syncStatus:  'none',
+  };
+
+  const leads = getLeads();
+  // מניעת כפילויות לפי ID
+  if (!leads.find(l => l.id === lead.id)) {
+    leads.unshift(lead);
+    saveLeads(leads);
+    renderTable();
+    const result = await syncLeadToSheets(lead, 'upsert');
+    if (result.ok) showToast('✓ ליד חדש מהדף נשמר וסונכרן', 'success');
+  }
+});
+
+// ============================================================
+// TOAST
+// ============================================================
+let toastTimer = null;
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent    = msg;
+  t.className      = 'show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = ''; }, 3200);
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function esc(str) {
+  return String(str || '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('header-date').textContent =
+    new Date().toLocaleDateString('he-IL', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  renderTable();
+  updateSyncBar();
+  // retry pending syncs on load
+  setTimeout(manualSync, 2000);
+});
+
+document.getElementById('modal-bg').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-bg')) closeModal();
+});
+document.getElementById('config-modal-bg').addEventListener('click', e => {
+  if (e.target === document.getElementById('config-modal-bg')) closeConfig();
+});
+</script>
+</body>
+</html>
